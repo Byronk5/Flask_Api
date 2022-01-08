@@ -1,4 +1,3 @@
-
 from flask import Flask, jsonify, request, make_response
 from flask_mongoengine import MongoEngine
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -18,6 +17,7 @@ db.init_app(app)
 
 app.config['SECRET_KEY'] = 'secret'
 
+
 # Models
 
 
@@ -36,6 +36,7 @@ class Profile(db.Document):
     created = db.DateTimeField(default=datetime.datetime.now, required=True)
     updated = db.DateTimeField(default=datetime.datetime.now, required=True)
 
+
 # Token to Protect Routes
 
 
@@ -48,7 +49,7 @@ def token_required(func):
             token = request.headers['x-access-token']
 
         if not token:
-            return jsonify({"message": "token is missing"}), 401
+            return jsonify({"Message": "Token is Missing"}), 401
 
         try:
             data = jwt.decode(
@@ -56,13 +57,14 @@ def token_required(func):
             current_user = User.objects(id=data['id']).first()
 
         except:
-            return jsonify({"message": "token is invalid"}), 401
+            return jsonify({"Message": "Token is Invalid"}), 401
 
         return func(current_user, *args, **kwargs)
 
     return decorated
 
-# Register Route
+
+# Register Route POST
 
 
 @app.route('/register/', methods=["POST"])
@@ -76,11 +78,89 @@ def create_user():
                         password=hashed_password)
         new_user.save()
 
-        return jsonify({"Message": "New user created!"}), 201
+        return jsonify({"Message": "New User Created!"}), 201
 
     except Exception as ex:
         print(ex)
-        return jsonify({"Message": "Unable to create user!"}), 401
+        return jsonify({"Message": "Unable to Create User!"}), 401
+
+
+# Registered Users GET
+
+
+@app.route('/registered-users/', methods=["GET"])
+def getAllUsers():
+    try:
+        output = []
+        for user in User.objects():
+            userData = {}
+            userData['email'] = user.email
+            userData['password'] = user.password
+            userData['created'] = user.created
+            userData['updated'] = user.updated
+
+        output.append(userData)
+        return jsonify(output), 200
+
+    except Exception as ex:
+        print(ex)
+        return jsonify({"Message": "Unable to Retrieve Users!"}), 404
+
+
+# Registered Users GET - Single User
+
+
+@app.route('/registered-users/<user_id>', methods=["GET"])
+def get_single_user(user_id):
+    try:
+        user = User.objects(id=user_id)
+
+        if not user:
+            return jsonify({"Message": "User not Found!"}), 404
+
+        return jsonify({"User": user}), 200
+
+    except Exception as ex:
+        print(ex)
+
+
+# Registered Users PUT
+
+
+@app.route('/registered-users/<user_id>', methods=["PUT"])
+def update_registered_user(user_id):
+    try:
+        user = User.objects(id=user_id).get()
+
+        if not user:
+            return jsonify({"Message": "User not Found!"}), 404
+
+        user.updated = datetime.datetime.now()
+
+        user.save()
+
+        return jsonify({"Message": "User Updated!"}), 201
+    except Exception as ex:
+        print(ex)
+
+
+# Registered Users DELETE
+
+
+@app.route('/registered-users/<user_id>', methods=["DELETE"])
+def delete_user(user_id):
+    try:
+        user = User.objects(id=user_id)
+
+        if not user:
+            return jsonify({"Message": "User not Found!"}), 404
+
+        user.delete()
+
+        return jsonify({"Message": "User Deleted!"}), 200
+
+    except Exception as ex:
+        print(ex)
 
 
 # Login Route
@@ -138,6 +218,8 @@ def create_profile(current_user):
 
 
 # Profile GET - List Profiles
+
+
 @app.route('/list-profiles/', methods=["GET"])
 @token_required
 def list_profiles(current_user):
@@ -171,7 +253,7 @@ def get_single_profile(current_user, user_id):
         user_profile = Profile.objects(id=user_id)
 
         if not user_profile:
-            return jsonify({"Message": "User not found!"}), 404
+            return jsonify({"Message": "User Profile not Found!"}), 404
 
         return jsonify({"User Profile": user_profile}), 200
 
@@ -183,8 +265,6 @@ def get_single_profile(current_user, user_id):
 
 # Updates the updated field in both the user and profile collections
 # id_user is passed instead of the Mongodb Object ID since the user and the user profile share this id
-
-
 @app.route('/profile/<user_id>', methods=["PUT"])
 @token_required
 def update_user_profile(current_user, user_id):
@@ -193,7 +273,7 @@ def update_user_profile(current_user, user_id):
         user = User.objects(id=user_id).get()
 
         if not user_profile and not user:
-            return jsonify({"Message": "User Profile not found!"}), 404
+            return jsonify({"Message": "User Profile not Found!"}), 404
 
         user_profile.updated = datetime.datetime.now()
         user.updated = datetime.datetime.now()
@@ -207,6 +287,7 @@ def update_user_profile(current_user, user_id):
 
 # Profile DELETE
 
+
 @app.route('/profile/<user_id>', methods=["DELETE"])
 @token_required
 def delete_profile(current_user, user_id):
@@ -214,10 +295,10 @@ def delete_profile(current_user, user_id):
         user_profile = Profile.objects(id=user_id)
 
         if not user_profile:
-            return jsonify({"Message": "User Profile not found!"}), 404
+            return jsonify({"Message": "User Profile not Found!"}), 404
 
         user_profile.delete()
-        return jsonify({"Message": "User Profile deleted!"}), 200
+        return jsonify({"Message": "User Profile Deleted!"}), 200
 
     except Exception as ex:
         print(ex)

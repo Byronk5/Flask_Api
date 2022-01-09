@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 import datetime
 import jwt
+import os
 
 app = Flask(__name__)
 
@@ -15,7 +16,7 @@ app.config['MONGODB_SETTINGS'] = {
 db = MongoEngine()
 db.init_app(app)
 
-app.config['SECRET_KEY'] = 'secret'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 
 
 # Models

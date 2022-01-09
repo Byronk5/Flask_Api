@@ -85,28 +85,6 @@ def create_user():
         return jsonify({"Message": "Unable to Create User!"}), 401
 
 
-# Registered Users GET
-
-
-@app.route('/registered-users/', methods=["GET"])
-def getAllUsers():
-    try:
-        output = []
-        for user in User.objects():
-            userData = {}
-            userData['email'] = user.email
-            userData['password'] = user.password
-            userData['created'] = user.created
-            userData['updated'] = user.updated
-
-        output.append(userData)
-        return jsonify(output), 200
-
-    except Exception as ex:
-        print(ex)
-        return jsonify({"Message": "Unable to Retrieve Users!"}), 404
-
-
 # Registered Users GET - Single User
 
 
